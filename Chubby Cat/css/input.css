@@ -566,15 +566,15 @@ body.layout-wide .active-tab-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     color: var(--text-secondary);
     border-radius: 50%;
     transition: background 0.2s, color 0.2s;
     flex-shrink: 0;
     background: transparent;
     border: none;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 #upload-btn:hover {
@@ -806,8 +806,8 @@ body.layout-wide .active-tab-container {
 
 /* --- Input Action Buttons (New Chat, Quick Phrases) --- */
 .input-action-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -818,7 +818,7 @@ body.layout-wide .active-tab-container {
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
     flex-shrink: 0;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .input-action-btn:hover {
