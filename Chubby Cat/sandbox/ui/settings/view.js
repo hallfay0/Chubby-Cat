@@ -12,6 +12,9 @@ export class SettingsView {
         this.callbacks = callbacks || {};
         this.elements = {};
 
+        // Dirty state tracking
+        this._initialSnapshot = null;
+
         // Initialize Sections
         this.connection = new ConnectionSection({
             onProviderChange: (provider) => this.handleProviderChange(provider),
@@ -51,18 +54,22 @@ export class SettingsView {
             modal: get('settings-modal'),
             btnClose: get('close-settings'),
             btnSave: get('save-shortcuts'),
-            btnReset: get('reset-shortcuts')
+            btnReset: get('reset-shortcuts'),
+            // Confirm dialog
+            confirmModal: get('unsaved-confirm-modal'),
+            confirmSave: get('confirm-save'),
+            confirmDiscard: get('confirm-discard')
         };
     }
 
     bindEvents() {
-        const { modal, btnClose, btnSave, btnReset } = this.elements;
+        const { modal, btnClose, btnSave, btnReset, confirmModal, confirmSave, confirmDiscard } = this.elements;
 
         // Modal actions
-        if (btnClose) btnClose.addEventListener('click', () => this.close());
+        if (btnClose) btnClose.addEventListener('click', () => this.tryClose());
         if (modal) {
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) this.close();
+                if (e.target === modal) this.tryClose();
             });
         }
 
@@ -70,10 +77,29 @@ export class SettingsView {
         if (btnSave) btnSave.addEventListener('click', () => this.handleSave());
         if (btnReset) btnReset.addEventListener('click', () => this.handleReset());
 
+        // Confirm dialog actions
+        if (confirmSave) confirmSave.addEventListener('click', () => {
+            this._hideConfirmDialog();
+            this.handleSave();
+        });
+        if (confirmDiscard) confirmDiscard.addEventListener('click', () => {
+            this._hideConfirmDialog();
+            this.close();
+        });
+        if (confirmModal) {
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) this._hideConfirmDialog();
+            });
+        }
+
         // Keyboard
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal && modal.classList.contains('visible')) {
-                this.close();
+            if (e.key === 'Escape') {
+                if (confirmModal && confirmModal.classList.contains('visible')) {
+                    this._hideConfirmDialog();
+                } else if (modal && modal.classList.contains('visible')) {
+                    this.tryClose();
+                }
             }
         });
     }
@@ -105,6 +131,10 @@ export class SettingsView {
         if (this.elements.modal) {
             this.elements.modal.classList.add('visible');
             this.fire('onOpen');
+            // Capture initial state for dirty checking (defer to allow sections to populate)
+            setTimeout(() => {
+                this._initialSnapshot = this._getCurrentData();
+            }, 0);
         }
     }
 
@@ -112,6 +142,66 @@ export class SettingsView {
         if (this.elements.modal) {
             this.elements.modal.classList.remove('visible');
         }
+        this._initialSnapshot = null;
+    }
+
+    tryClose() {
+        if (this.isDirty()) {
+            this._showConfirmDialog();
+        } else {
+            this.close();
+        }
+    }
+
+    _showConfirmDialog() {
+        if (this.elements.confirmModal) {
+            this.elements.confirmModal.classList.add('visible');
+        }
+    }
+
+    _hideConfirmDialog() {
+        if (this.elements.confirmModal) {
+            this.elements.confirmModal.classList.remove('visible');
+        }
+    }
+
+    isDirty() {
+        if (!this._initialSnapshot) return false;
+        const current = this._getCurrentData();
+        return !this._deepEqual(this._initialSnapshot, current);
+    }
+
+    _getCurrentData() {
+        return {
+            shortcuts: this.shortcuts.getData(),
+            connection: this.connection.getData(),
+            general: this.general.getData()
+        };
+    }
+
+    _deepEqual(a, b) {
+        if (a === b) return true;
+        if (a == null || b == null) return a === b;
+        if (typeof a !== typeof b) return false;
+        if (typeof a !== 'object') return a === b;
+        if (Array.isArray(a) !== Array.isArray(b)) return false;
+
+        if (Array.isArray(a)) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (!this._deepEqual(a[i], b[i])) return false;
+            }
+            return true;
+        }
+
+        const keysA = Object.keys(a);
+        const keysB = Object.keys(b);
+        if (keysA.length !== keysB.length) return false;
+        for (const key of keysA) {
+            if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+            if (!this._deepEqual(a[key], b[key])) return false;
+        }
+        return true;
     }
 
     // Delegation to Shortcuts

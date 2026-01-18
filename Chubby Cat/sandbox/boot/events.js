@@ -100,10 +100,15 @@ export function bindAppEvents(app, ui, setResizeRef) {
 
     // MCP Servers Panel is initialized separately in app.js
 
-    // Model Selector
+    // Model Selector (Hidden select for compatibility)
     const modelSelect = document.getElementById('model-select');
 
-    // Auto-resize Logic
+    // Custom Dropdown Elements
+    const modelDropdown = document.getElementById('model-dropdown');
+    const modelDropdownTrigger = document.getElementById('model-dropdown-trigger');
+    const modelDropdownMenu = document.getElementById('model-dropdown-menu');
+
+    // Auto-resize Logic (kept for compatibility, but not actively used now)
     const resizeModelSelect = () => {
         if (!modelSelect) return;
 
@@ -113,24 +118,99 @@ export function bindAppEvents(app, ui, setResizeRef) {
         }
         if (modelSelect.selectedIndex === -1) return;
 
-        const tempSpan = document.createElement('span');
-        Object.assign(tempSpan.style, {
-            visibility: 'hidden',
-            position: 'absolute',
-            fontSize: '13px',
-            fontWeight: '500',
-            fontFamily: window.getComputedStyle(modelSelect).fontFamily,
-            whiteSpace: 'nowrap'
-        });
-        tempSpan.textContent = modelSelect.options[modelSelect.selectedIndex].text;
-        document.body.appendChild(tempSpan);
-        const width = tempSpan.getBoundingClientRect().width;
-        document.body.removeChild(tempSpan);
-        modelSelect.style.width = `${width + 34}px`;
+        // Sync dropdown label with select value
+        if (ui._syncDropdownSelection) {
+            ui._syncDropdownSelection();
+        }
     };
 
     if (setResizeRef) setResizeRef(resizeModelSelect); // Expose for message handler
 
+    // --- Custom Dropdown Events ---
+    if (modelDropdownTrigger && modelDropdown) {
+        // Toggle dropdown on trigger click
+        modelDropdownTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (ui.toggleDropdown) {
+                ui.toggleDropdown();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (modelDropdown && !modelDropdown.contains(e.target)) {
+                if (ui.toggleDropdown) {
+                    ui.toggleDropdown(true); // force close
+                }
+            }
+        });
+
+        // Handle option selection in dropdown menu
+        if (modelDropdownMenu) {
+            modelDropdownMenu.addEventListener('click', (e) => {
+                const option = e.target.closest('.model-dropdown-option');
+                if (!option) return;
+
+                const value = option.dataset.value;
+                const provider = option.dataset.provider;
+                const isConfig = option.dataset.isConfig === 'true';
+                const configId = option.dataset.configId;
+
+                // Close dropdown
+                if (ui.toggleDropdown) {
+                    ui.toggleDropdown(true);
+                }
+
+                // Update selection
+                if (ui.selectModelFromDropdown) {
+                    ui.selectModelFromDropdown(value, provider, isConfig, configId);
+                }
+
+                // Handle provider switching
+                const currentProvider = ui.getCurrentProvider ? ui.getCurrentProvider() : 'web';
+                if (provider && provider !== currentProvider) {
+                    if (ui.handleProviderSwitch) {
+                        const switched = ui.handleProviderSwitch(provider, {
+                            configId: isConfig ? configId : null
+                        });
+                        if (switched) {
+                            const providerNames = {
+                                'web': 'Web (Free)',
+                                'official': 'Official API',
+                                'openai': 'Custom API'
+                            };
+                            ui.updateStatus(`✓ ${providerNames[provider] || provider}`);
+                            setTimeout(() => ui.updateStatus(''), 2000);
+                        }
+                    }
+                } else if (isConfig && configId) {
+                    if (ui.handleOpenaiConfigSwitch) {
+                        ui.handleOpenaiConfigSwitch(configId);
+                    }
+                }
+
+                // Notify app of model change
+                app.handleModelChange(value);
+            });
+        }
+
+        // Keyboard navigation for dropdown
+        modelDropdownTrigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (ui.toggleDropdown) {
+                    ui.toggleDropdown();
+                }
+            } else if (e.key === 'Escape') {
+                if (ui.isDropdownOpen && ui.isDropdownOpen()) {
+                    e.preventDefault();
+                    ui.toggleDropdown(true);
+                }
+            }
+        });
+    }
+
+    // Legacy select change handler (kept for programmatic changes)
     if (modelSelect) {
         modelSelect.addEventListener('change', (e) => {
             const selectedOption = e.target.selectedOptions[0];
@@ -170,7 +250,10 @@ export function bindAppEvents(app, ui, setResizeRef) {
             // Always notify app of model change for session tracking
             app.handleModelChange(e.target.value);
 
-            resizeModelSelect();
+            // Sync dropdown UI
+            if (ui._syncDropdownSelection) {
+                ui._syncDropdownSelection();
+            }
         });
         // Call initial resize after a short delay to ensure fonts/styles loaded
         setTimeout(resizeModelSelect, 50);

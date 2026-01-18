@@ -71,6 +71,10 @@ export class AppMessageBridge {
                         this.ui.modelSelect.selectedIndex = 0;
                     }
                 }
+                // Sync custom dropdown UI with select value
+                if (this.ui._syncDropdownSelection) {
+                    this.ui._syncDropdownSelection();
+                }
                 if (this.resizeFn) this.resizeFn();
             }
             return;

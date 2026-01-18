@@ -7,11 +7,17 @@ export const HeaderTemplate = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
             
-            <div class="model-select-wrapper">
-                <select id="model-select" data-i18n-title="modelSelectTooltip" title="Select Model (Tab to cycle)">
+            <div class="model-dropdown" id="model-dropdown" data-i18n-title="modelSelectTooltip" title="Select Model (Tab to cycle)">
+                <button class="model-dropdown-trigger" id="model-dropdown-trigger" type="button">
+                    <span class="model-dropdown-label" id="model-dropdown-label">Fast</span>
+                    <svg class="model-dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="model-dropdown-menu" id="model-dropdown-menu">
+                    <!-- Options will be populated dynamically -->
+                </div>
+                <!-- Hidden select for compatibility -->
+                <select id="model-select" style="display:none;">
                     <option value="gemini-3-flash">Fast</option>
-                    <option value="gemini-3-flash-thinking">Thinking</option>
-                    <option value="gemini-3-pro">3 Pro</option>
                 </select>
             </div>
         </div>

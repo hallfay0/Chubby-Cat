@@ -39,6 +39,12 @@ export class UIController {
         this.modelSelect = elements.modelSelect;
         this.tabSwitcherBtn = document.getElementById('tab-switcher-btn');
 
+        // Custom dropdown elements
+        this.modelDropdown = document.getElementById('model-dropdown');
+        this.modelDropdownTrigger = document.getElementById('model-dropdown-trigger');
+        this.modelDropdownLabel = document.getElementById('model-dropdown-label');
+        this.modelDropdownMenu = document.getElementById('model-dropdown-menu');
+
         // Initialize Layout Detection
         this.checkLayout();
         window.addEventListener('resize', () => this.checkLayout());
@@ -104,27 +110,12 @@ export class UIController {
             });
         }
 
-        // --- Render Options with Grouping ---
-
-        // Helper to add options
-        const addOptions = (opts, providerType) => {
-            opts.forEach(o => {
-                const opt = document.createElement('option');
-                opt.value = o.val;
-                opt.textContent = o.txt;
-                opt.dataset.provider = o.provider;
-                if (o.isConfig) {
-                    opt.dataset.isConfig = 'true';
-                    opt.dataset.configId = o.configId;
-                }
-                this.modelSelect.appendChild(opt);
-            });
-        };
+        // --- Render Hidden Select Options (for compatibility) ---
 
         // Add Web models (always first, always available)
         if (webModels.length > 0) {
             const webGroup = document.createElement('optgroup');
-            webGroup.label = '🌐 Web (Free)';
+            webGroup.label = 'Web (Free)';
             webModels.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o.val;
@@ -138,7 +129,7 @@ export class UIController {
         // Add Official API models (if configured)
         if (officialModels.length > 0) {
             const officialGroup = document.createElement('optgroup');
-            officialGroup.label = '✨ Official API';
+            officialGroup.label = 'Official API';
             officialModels.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o.val;
@@ -152,7 +143,7 @@ export class UIController {
         // Add OpenAI configs (if any)
         if (openaiModels.length > 0) {
             const openaiGroup = document.createElement('optgroup');
-            openaiGroup.label = '🔧 Custom API';
+            openaiGroup.label = 'Custom API';
             openaiModels.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o.val;
@@ -164,6 +155,9 @@ export class UIController {
             });
             this.modelSelect.appendChild(openaiGroup);
         }
+
+        // --- Render Custom Dropdown Menu ---
+        this._renderDropdownMenu(webModels, officialModels, openaiModels, current);
 
         // --- Restore Selection ---
         // Try to restore previous selection, considering cross-provider scenarios
@@ -205,7 +199,94 @@ export class UIController {
             }
         }
 
-        this._resizeModelSelect();
+        this._syncDropdownSelection();
+    }
+
+    /**
+     * Render custom dropdown menu with groups and heart icons
+     */
+    _renderDropdownMenu(webModels, officialModels, openaiModels, selectedValue) {
+        if (!this.modelDropdownMenu) return;
+
+        const heartSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+
+        let html = '';
+
+        const renderOption = (model) => {
+            const isSelected = model.val === selectedValue;
+            const configAttrs = model.isConfig ? `data-is-config="true" data-config-id="${model.configId}"` : '';
+            return `
+                <div class="model-dropdown-option${isSelected ? ' selected' : ''}"
+                     data-value="${model.val}"
+                     data-provider="${model.provider}"
+                     ${configAttrs}>
+                    <span class="model-dropdown-option-label">${model.txt}</span>
+                    <span class="model-dropdown-option-icon">${heartSvg}</span>
+                </div>
+            `;
+        };
+
+        // Web models
+        if (webModels.length > 0) {
+            html += `<div class="model-dropdown-group">Web (Free)</div>`;
+            webModels.forEach(m => { html += renderOption(m); });
+        }
+
+        // Official API models
+        if (officialModels.length > 0) {
+            html += `<div class="model-dropdown-group">Official API</div>`;
+            officialModels.forEach(m => { html += renderOption(m); });
+        }
+
+        // OpenAI configs
+        if (openaiModels.length > 0) {
+            html += `<div class="model-dropdown-group">Custom API</div>`;
+            openaiModels.forEach(m => { html += renderOption(m); });
+        }
+
+        this.modelDropdownMenu.innerHTML = html;
+    }
+
+    /**
+     * Sync dropdown UI with hidden select value
+     */
+    _syncDropdownSelection() {
+        if (!this.modelSelect || !this.modelDropdownMenu || !this.modelDropdownLabel) return;
+
+        const selectedValue = this.modelSelect.value;
+        const selectedOption = this.modelSelect.options[this.modelSelect.selectedIndex];
+        const selectedText = selectedOption ? selectedOption.text : '';
+
+        // Update trigger label
+        this.modelDropdownLabel.textContent = selectedText;
+
+        // Update dropdown menu selection
+        const options = this.modelDropdownMenu.querySelectorAll('.model-dropdown-option');
+        options.forEach(opt => {
+            if (opt.dataset.value === selectedValue) {
+                opt.classList.add('selected');
+            } else {
+                opt.classList.remove('selected');
+            }
+        });
+    }
+
+    /**
+     * Select a model from dropdown (called from event handler)
+     */
+    selectModelFromDropdown(value, provider, isConfig, configId) {
+        if (!this.modelSelect) return;
+
+        this.modelSelect.value = value;
+        this._syncDropdownSelection();
+
+        // Return the selection info for event handler to process
+        return {
+            value,
+            provider,
+            isConfig,
+            configId
+        };
     }
 
     /**
@@ -245,7 +326,7 @@ export class UIController {
         // Update settings controller state
         this.settings.updateConnectionSettings(this._currentSettings);
 
-        this._resizeModelSelect();
+        this._syncDropdownSelection();
 
         return true;
     }
@@ -277,7 +358,7 @@ export class UIController {
         // Update settings controller state
         this.settings.updateConnectionSettings(this._currentSettings);
 
-        this._resizeModelSelect();
+        this._syncDropdownSelection();
     }
 
     /**
@@ -286,6 +367,26 @@ export class UIController {
     getCurrentProvider() {
         if (!this._currentSettings) return 'web';
         return this._currentSettings.provider || 'web';
+    }
+
+    /**
+     * Toggle dropdown menu open/close
+     */
+    toggleDropdown(forceClose = false) {
+        if (!this.modelDropdown) return;
+
+        if (forceClose || this.modelDropdown.classList.contains('open')) {
+            this.modelDropdown.classList.remove('open');
+        } else {
+            this.modelDropdown.classList.add('open');
+        }
+    }
+
+    /**
+     * Check if dropdown is open
+     */
+    isDropdownOpen() {
+        return this.modelDropdown?.classList.contains('open') || false;
     }
 
     _resizeModelSelect() {
