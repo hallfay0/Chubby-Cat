@@ -67,6 +67,9 @@ export class ConnectionSection {
             openaiTimeout: get('openai-timeout'),
             openaiSetDefault: get('openai-set-default'),
             openaiConfigStatus: get('openai-config-status'),
+            openaiFetchModels: get('openai-fetch-models'),
+            openaiFetchStatus: get('openai-fetch-status'),
+            openaiModelDropdown: get('openai-model-dropdown'),
 
             // Claude-specific options
             claudeOptions: get('claude-options'),
@@ -374,6 +377,21 @@ export class ConnectionSection {
                 config.isDefault = openaiSetDefault.checked;
 
                 this._showOpenaiStatus(openaiSetDefault.checked ? 'Set as default configuration' : '');
+            });
+        }
+
+        // Fetch available models button
+        const { openaiFetchModels, openaiModelDropdown } = this.elements;
+        if (openaiFetchModels) {
+            openaiFetchModels.addEventListener('click', () => {
+                this._fetchAvailableModels();
+            });
+        }
+
+        // Model dropdown selection
+        if (openaiModelDropdown) {
+            openaiModelDropdown.addEventListener('change', () => {
+                this._onModelDropdownSelect();
             });
         }
     }
@@ -735,6 +753,133 @@ export class ConnectionSection {
                 }
             }, 2000);
         }
+    }
+
+    _showFetchStatus(text, isError = false) {
+        const { openaiFetchStatus } = this.elements;
+        if (!openaiFetchStatus) return;
+
+        if (!text) {
+            openaiFetchStatus.style.display = 'none';
+            openaiFetchStatus.textContent = '';
+            return;
+        }
+
+        openaiFetchStatus.style.display = 'block';
+        openaiFetchStatus.textContent = text;
+        openaiFetchStatus.style.color = isError ? '#b00020' : '#4CAF50';
+    }
+
+    async _fetchAvailableModels() {
+        const { openaiProviderType, openaiBaseUrl, openaiApiKey, openaiModelDropdown, openaiFetchModels } = this.elements;
+
+        const providerType = openaiProviderType ? openaiProviderType.value : 'openai';
+        const baseUrl = openaiBaseUrl ? openaiBaseUrl.value.trim().replace(/\/$/, '') : '';
+        const apiKey = openaiApiKey ? openaiApiKey.value.trim() : '';
+
+        if (!baseUrl) {
+            this._showFetchStatus('Base URL is required', true);
+            return;
+        }
+
+        // Disable button during fetch
+        if (openaiFetchModels) openaiFetchModels.disabled = true;
+        this._showFetchStatus('Fetching models...');
+
+        // Hide dropdown while fetching
+        if (openaiModelDropdown) openaiModelDropdown.style.display = 'none';
+
+        try {
+            const isClaude = providerType === 'claude';
+            const url = isClaude ? `${baseUrl}/v1/models` : `${baseUrl}/models`;
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (apiKey) {
+                if (isClaude) {
+                    headers['x-api-key'] = apiKey;
+                    headers['anthropic-version'] = '2023-06-01';
+                } else {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+            }
+
+            const response = await fetch(url, { method: 'GET', headers });
+
+            if (!response.ok) {
+                let errorText = await response.text();
+                try {
+                    const errJson = JSON.parse(errorText);
+                    if (errJson.error?.message) errorText = errJson.error.message;
+                } catch (e) { }
+                throw new Error(`${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            const models = Array.isArray(data.data) ? data.data : [];
+
+            if (models.length === 0) {
+                this._showFetchStatus('No models found', true);
+                return;
+            }
+
+            // Populate dropdown
+            this._populateModelDropdown(models);
+            this._showFetchStatus(`Found ${models.length} model(s)`);
+
+            // Auto-hide status after 3 seconds
+            setTimeout(() => this._showFetchStatus(''), 3000);
+
+        } catch (err) {
+            this._showFetchStatus(err.message || 'Failed to fetch models', true);
+        } finally {
+            if (openaiFetchModels) openaiFetchModels.disabled = false;
+        }
+    }
+
+    _populateModelDropdown(models) {
+        const { openaiModelDropdown } = this.elements;
+        if (!openaiModelDropdown) return;
+
+        // Clear existing options
+        openaiModelDropdown.innerHTML = '<option value="" disabled selected>-- 选择模型 --</option>';
+
+        // Add model options
+        const modelIds = models.map(m => m.id).filter(Boolean).sort();
+        for (const id of modelIds) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = id;
+            openaiModelDropdown.appendChild(opt);
+        }
+
+        // Show dropdown
+        openaiModelDropdown.style.display = 'block';
+    }
+
+    _onModelDropdownSelect() {
+        const { openaiModelDropdown, openaiModel } = this.elements;
+        if (!openaiModelDropdown || !openaiModel) return;
+
+        const selectedModel = openaiModelDropdown.value;
+        if (!selectedModel) return;
+
+        // Append to existing models (comma separated) or set as new value
+        const currentValue = openaiModel.value.trim();
+        if (currentValue) {
+            // Check if already exists
+            const existing = currentValue.split(',').map(s => s.trim());
+            if (!existing.includes(selectedModel)) {
+                openaiModel.value = currentValue + ', ' + selectedModel;
+            }
+        } else {
+            openaiModel.value = selectedModel;
+        }
+
+        // Reset dropdown to placeholder
+        openaiModelDropdown.selectedIndex = 0;
+
+        // Trigger input event to save changes
+        openaiModel.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     _getActiveServer() {

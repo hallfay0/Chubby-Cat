@@ -70,7 +70,14 @@ export const ConnectionSettingsTemplate = `
             </div>
             <div>
                 <label style="font-weight: 500; display: block; margin-bottom: 2px;">Model IDs (Comma separated)</label>
-                <input type="text" id="openai-model" class="shortcut-input" style="width: 100%; text-align: left; box-sizing: border-box;" placeholder="e.g. gpt-4o, claude-3-5-sonnet">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="openai-model" class="shortcut-input" style="flex: 1; text-align: left; box-sizing: border-box;" placeholder="e.g. gpt-4o, claude-3-5-sonnet">
+                    <button id="openai-fetch-models" class="tool-btn" style="padding: 6px 10px; white-space: nowrap;" type="button">获取</button>
+                </div>
+                <div id="openai-fetch-status" style="font-size: 12px; margin-top: 4px; display: none;"></div>
+                <select id="openai-model-dropdown" class="shortcut-input" style="width: 100%; margin-top: 6px; padding: 6px 12px; display: none;">
+                    <option value="" disabled selected>-- 选择模型 --</option>
+                </select>
             </div>
             <div>
                 <label data-i18n="openaiTimeout" style="font-weight: 500; display: block; margin-bottom: 2px;">Timeout (ms)</label>
