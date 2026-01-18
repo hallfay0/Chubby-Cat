@@ -93,6 +93,8 @@ export function initAppMode() {
             });
             // Store reference for later sync
             app.mcpServersController = mcpServers;
+            // Sync button state immediately after init (fixes race condition with RESTORE_CONNECTION_SETTINGS)
+            mcpServers.syncFromSettings();
         });
 
         // Trigger dependency load in parallel, and re-render if needed when done
