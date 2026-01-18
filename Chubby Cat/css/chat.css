@@ -5,6 +5,7 @@
     overflow-y: auto;
     padding: 80px 20px 0 20px;
     padding-bottom: 200px;
+    padding-right: 60px; /* 20px base + 40px for right sidebar */
     /* Space for input and active tab display */
     display: flex;
     flex-direction: column;
@@ -15,8 +16,15 @@
 
 /* Wide Layout Overrides */
 body.layout-wide #chat-history {
-    padding-left: 300px;
+    padding-left: 196px;
     /* Sidebar width + padding */
+}
+
+/* Very small screens: no right sidebar */
+@media (max-width: 380px) {
+    #chat-history {
+        padding-right: 20px;
+    }
 }
 
 /* Constrain line width for better readability on wide screens */

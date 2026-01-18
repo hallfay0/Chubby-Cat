@@ -72,14 +72,17 @@ export class SettingsController {
             onImport: (payload) => this.handleImport(payload)
         });
 
-        // External Trigger Binding
-        const trigger = document.getElementById('settings-btn');
-        if (trigger) {
-            trigger.addEventListener('click', () => {
-                this.open();
-                if (this.callbacks.onOpen) this.callbacks.onOpen();
-            });
-        }
+        // External Trigger Binding (supports multiple settings buttons)
+        const settingsBtnIds = ['settings-btn', 'right-settings-btn'];
+        settingsBtnIds.forEach(id => {
+            const trigger = document.getElementById(id);
+            if (trigger) {
+                trigger.addEventListener('click', () => {
+                    this.open();
+                    if (this.callbacks.onOpen) this.callbacks.onOpen();
+                });
+            }
+        });
 
         // Listen for log data
         window.addEventListener('message', (e) => {

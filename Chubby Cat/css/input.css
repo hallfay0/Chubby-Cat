@@ -2,10 +2,10 @@
     position: fixed;
     bottom: 0;
     left: 0;
-    right: 0;
+    right: 40px; /* Avoid right sidebar */
     padding: 0 20px 24px 20px;
     background: linear-gradient(to top, var(--footer-gradient-start) 80%, transparent);
-    z-index: 100;
+    z-index: var(--z-footer);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -14,8 +14,15 @@
 
 /* Wide Layout Overrides */
 body.layout-wide .footer {
-    padding-left: 300px;
+    padding-left: 196px;
     /* Sidebar width + padding */
+}
+
+/* Very small screens: no right sidebar */
+@media (max-width: 380px) {
+    .footer {
+        right: 0;
+    }
 }
 
 /* Hide unsupported buttons in wide (full-page) mode */
@@ -49,7 +56,7 @@ body.layout-wide .tools-container {
     width: 100%;
     margin-bottom: 10px;
     pointer-events: auto;
-    z-index: 50;
+    z-index: var(--z-base);
 }
 
 /* --- Active Tab Display Area --- */
@@ -67,7 +74,7 @@ body.layout-wide .tools-container {
     width: 100%;
     box-sizing: border-box;
     position: relative;
-    z-index: 101;
+    z-index: 2;
 }
 
 .active-tab-display:hover {
@@ -147,7 +154,7 @@ body.layout-wide .tools-container {
     visibility: hidden;
     transform: translateY(8px);
     transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-    z-index: 100;
+    z-index: 1;
     max-height: 0;
     overflow: hidden;
 }
@@ -345,7 +352,7 @@ body.layout-wide .tools-container {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 99;
+    z-index: var(--z-sidebar-overlay);
     display: none;
 }
 
@@ -441,7 +448,7 @@ body.layout-wide .active-tab-container {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 10;
+    z-index: var(--z-base);
     opacity: 0;
     transform: translateY(-50%) scale(0.9);
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -879,7 +886,7 @@ body.layout-wide .active-tab-container {
     opacity: 0;
     visibility: hidden;
     transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-    z-index: 200;
+    z-index: var(--z-dropdown);
     overflow: hidden;
 }
 
@@ -1039,7 +1046,7 @@ body.layout-wide .active-tab-container {
     visibility: hidden;
     transform: scale(0.95);
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-    z-index: 210;
+    z-index: var(--z-modal);
 }
 
 .quick-phrase-modal.open {
@@ -1173,11 +1180,11 @@ body.layout-wide .active-tab-container {
     position: relative;
     display: flex;
     align-items: center;
-    z-index: 50;
+    z-index: var(--z-base);
 }
 
 .mcp-servers-wrapper.open {
-    z-index: 1001;
+    z-index: var(--z-dropdown);
 }
 
 .mcp-servers-dropdown {
@@ -1193,7 +1200,7 @@ body.layout-wide .active-tab-container {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1), visibility 0.25s, transform 0.25s cubic-bezier(0.2, 0, 0, 1);
-    z-index: 9999;
+    z-index: var(--z-dropdown);
     overflow: hidden;
     pointer-events: none;
     transform: translateY(10px);

@@ -1,5 +1,18 @@
 
 :root {
+    /* --- Z-Index Hierarchy (统一层级系统) --- */
+    /* 层级越高，数值越大，覆盖越靠前 */
+    --z-base: 1;              /* 普通内容 */
+    --z-header: 10;           /* Header (position: absolute, 不阻挡点击) */
+    --z-right-sidebar: 20;    /* 右侧边栏 (固定在右侧) */
+    --z-footer: 30;           /* Footer/Input 区域 */
+    --z-left-sidebar: 100;    /* 左侧边栏 (滑出时需覆盖内容) */
+    --z-sidebar-overlay: 99;  /* 侧边栏遮罩 (在侧边栏下方) */
+    --z-dropdown: 200;        /* 下拉菜单 */
+    --z-modal: 300;           /* 模态框 */
+    --z-modal-overlay: 299;   /* 模态框遮罩 */
+    --z-toast: 400;           /* Toast 通知 */
+
     /* --- Light Theme (Default) --- */
     --bg-body: #ffffff;
     --bg-sidebar: #f0f4f9;
@@ -125,6 +138,14 @@ body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    padding-right: 40px; /* Reserve space for right sidebar */
+}
+
+/* Remove right padding on very small screens where sidebar is hidden */
+@media (max-width: 380px) {
+    #app {
+        padding-right: 0;
+    }
 }
 
 * { box-sizing: border-box; }

@@ -2,6 +2,7 @@
 // sandbox/ui/templates.js
 
 export { SidebarTemplate } from './templates/sidebar.js';
+export { RightSidebarTemplate } from './templates/right_sidebar.js';
 export { SettingsTemplate } from './templates/settings.js';
 export { HeaderTemplate } from './templates/header.js';
 export { ChatTemplate } from './templates/chat.js';

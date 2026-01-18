@@ -6,10 +6,10 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 280px;
+    width: 180px;
     height: 100%;
     background: var(--bg-sidebar);
-    z-index: 200;
+    z-index: var(--z-left-sidebar);
     box-shadow: 4px 0 12px rgba(0,0,0,0.05);
     transform: translateX(-100%);
     transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background-color 0.2s;
@@ -206,7 +206,7 @@ body.layout-wide .sidebar-overlay {
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.3);
     backdrop-filter: blur(2px);
-    z-index: 190;
+    z-index: var(--z-sidebar-overlay);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -247,5 +247,92 @@ body.layout-wide .sidebar-overlay {
     .sidebar {
         width: 85%;
         max-width: 320px;
+    }
+}
+
+/* =========================================
+   RIGHT SIDEBAR (Fixed, Always Visible)
+   ========================================= */
+
+.right-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: var(--bg-sidebar);
+    z-index: var(--z-right-sidebar);
+    box-shadow: -1px 0 0 var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.2s, width 0.2s;
+}
+
+/* Content Area (Expandable for future use) */
+.right-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 8px;
+}
+
+/* Footer with Settings Button */
+.right-sidebar-footer {
+    padding: 12px 8px 16px 8px;
+    flex-shrink: 0;
+    border-top: 1px solid transparent;
+}
+
+/* Override settings button for compact right sidebar */
+.right-sidebar .settings-btn {
+    width: 100%;
+    padding: 10px 8px;
+    justify-content: center;
+    gap: 0;
+    border-radius: 10px;
+}
+
+/* Hide text label in compact mode */
+.right-sidebar .settings-btn span {
+    display: none;
+}
+
+/* SVG icon centered */
+.right-sidebar .settings-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Tooltip on hover */
+.right-sidebar .settings-btn {
+    position: relative;
+}
+
+.right-sidebar .settings-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.right-sidebar .settings-btn:hover::after {
+    opacity: 1;
+}
+
+/* Mobile: Hide right sidebar only on very small screens */
+@media (max-width: 380px) {
+    .right-sidebar {
+        display: none;
     }
 }
