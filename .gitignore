@@ -25,4 +25,5 @@ dist-ssr
 .claude
 .venv
 .mantic
+.gemini
 CLAUDE.md
